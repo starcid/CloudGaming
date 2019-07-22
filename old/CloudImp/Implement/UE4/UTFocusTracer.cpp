@@ -13,6 +13,7 @@
 #include "Public/UTCharacter.h"
 #include "Public/SocketSubsystem.h"
 #include "Public/IPAddress.h"
+#include "Public/UTATypes.h"
 #include "HighResScreenshot.h"
 //#include "IImageWrapper.h"
 //#include "Runtime/ImageWriteQueue/Public/ImageWriteQueue.h"
@@ -217,7 +218,71 @@ void UTFocusUITracer::UpdateUIRectInfo(std::vector<FocusRectInfo*>& rectInfos)
 
 	int level = 0;
 	GoThroughChildren(spSWidget.Get(), rectInfos, offset, level);
+	if (GWorld != NULL)
+	{
+		APlayerController* player = UGameplayStatics::GetPlayerController(GWorld, 0);
+		if (player != NULL)
+		{
+			AUTHUD* hud = (AUTHUD*)player->GetHUD();
+			TArray<class UUTHUDWidget*>& HudWidgets = hud->HudWidgets;
+			for (int32 WidgetIndex = 0; WidgetIndex < HudWidgets.Num(); WidgetIndex++)
+			{
+				// If we aren't hidden then set the canvas and render..
+				if (HudWidgets[WidgetIndex] && !HudWidgets[WidgetIndex]->IsHidden() && !HudWidgets[WidgetIndex]->IsPendingKill())
+				{
+					TArray<UStructProperty*>& RenderObjectList = HudWidgets[WidgetIndex]->GetRenderObjectList();
+					for (int32 i = 0; i < RenderObjectList.Num(); i++)
+					{
+						UStructProperty* Prop = RenderObjectList[i];
+						const FName CPPName = Prop->Struct->GetFName();
+						bool ok = false;
+						float width = 0, height = 0;
+						float posX = 0, posY = 0;
+						if (CPPName == ERenderObjectType::TextureObject)
+						{
+							// Get the object.
+							FHUDRenderObject_Texture* PtrToTexture = RenderObjectList[i]->ContainerPtrToValuePtr<FHUDRenderObject_Texture>(HudWidgets[WidgetIndex], 0);
+							if (PtrToTexture && !PtrToTexture->bHidden && PtrToTexture->RenderOpacity > 0)
+							{
+								width = PtrToTexture->GetWidth();
+								height = PtrToTexture->GetHeight();
+								posX = HudWidgets[WidgetIndex]->GetRenderPosition().X + PtrToTexture->Position.X;
+								posY = HudWidgets[WidgetIndex]->GetRenderPosition().Y + PtrToTexture->Position.Y;
+								ok = true;
+							}
+						}
+						else if (CPPName == ERenderObjectType::TextObject)
+						{
+							// Get the object.
+							FHUDRenderObject_Text* PtrToText = RenderObjectList[i]->ContainerPtrToValuePtr<FHUDRenderObject_Text>(HudWidgets[WidgetIndex], 0);
+							if (PtrToText && !PtrToText->bHidden && PtrToText->RenderOpacity > 0)
+							{
+								width = PtrToText->GetSize().X;
+								height = PtrToText->GetSize().Y;
+								posX = HudWidgets[WidgetIndex]->GetRenderPosition().X + PtrToText->Position.X;
+								posY = HudWidgets[WidgetIndex]->GetRenderPosition().Y + PtrToText->Position.Y;
+								/// use  FCanvasTextItemBase::GetTextSize
+								ok = true;
+							}
+						}
+						if (ok)
+						{
+							FocusRectInfo* rectInfo = new FocusRectInfo();
+							rectInfo->distToCam = 0;
+							rectInfo->priority = 128;
+							rectInfo->left = posX;
+							rectInfo->right = posX + width;
+							rectInfo->top = posY;
+							rectInfo->bottom = posY + height;
+							rectInfos.push_back(rectInfo);
+						}
+					}
+				}
+			}
+		}
+	}
 }
+	
 
 UTFocusDraw::UTFocusDraw()
 {
@@ -322,7 +387,8 @@ bool UTFocusSocketSender::Connect()
 
 bool UTFocusSocketSender::Connect(const char* ipAddr, int port)
 {
-	socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(TEXT("FocusTrace"), TEXT("default"), false);
+	//socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(TEXT("FocusTrace"), TEXT("default"), false);
+	socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("default"), false);
 
 	TSharedRef<FInternetAddr> addr = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateInternetAddr();
 	FString fIpAddr(ipAddr);
