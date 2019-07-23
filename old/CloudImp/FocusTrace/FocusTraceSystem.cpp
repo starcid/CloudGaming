@@ -1,5 +1,6 @@
 #include "UnrealTournament.h"
 #include "FocusTraceSystem.h"
+#include "../Implement/UE4/UTFocusTracer.h"
 
 FocusTraceSystem* FocusTraceSystem::instance = NULL;
 
@@ -44,12 +45,7 @@ void FocusTraceSystem::Release()
 	}
 	tracers.clear();
 
-	std::vector<FocusCaptureScreenBase*>::iterator capIter;
-	for (capIter = captures.begin(); capIter != captures.end(); capIter++)
-	{
-		delete (*capIter);
-	}
-	captures.clear();
+	ClearCaptureScreen();
 }
 
 FocusTraceSystem::FocusTraceSystem()
@@ -70,14 +66,6 @@ static bool compareRectDist(FocusRectInfo* i1, FocusRectInfo* i2)
 void FocusTraceSystem::Update(float DeltaSeconds)
 {
 	timer += DeltaSeconds;
-
-	/// clear
-	std::vector<FocusRectInfo*>::iterator rectInfoIter;
-	for (rectInfoIter = rectInfos.begin(); rectInfoIter != rectInfos.end(); rectInfoIter++)
-	{
-		delete (*rectInfoIter);
-	}
-	rectInfos.clear();
 
 	/// collect valid rect info
 	std::vector<FocusTracerBase*>::iterator iter;
@@ -101,9 +89,9 @@ void FocusTraceSystem::Update(float DeltaSeconds)
 		for (capIter = captures.begin(); capIter != captures.end(); capIter++)
 		{
 			(*capIter)->CaptureScreenToDisk("D:\\Screen");
-			(*capIter)->CaptureUIToDisk("D:\\Screen");
-			timer = 0.0f;
+			///(*capIter)->CaptureUIToDisk("D:\\Screen");
 		}
+		timer = 0.0f;
 	}
 
 	/// collect ui info
@@ -130,6 +118,26 @@ void FocusTraceSystem::OnDrawHud()
 			drawer->DrawRect(info->left, info->right, info->top, info->bottom, info->priority);
 		}
 	}
+
+	/// clear
+	std::vector<FocusRectInfo*>::iterator rectInfoIter;
+	for (rectInfoIter = rectInfos.begin(); rectInfoIter != rectInfos.end(); rectInfoIter++)
+	{
+		delete (*rectInfoIter);
+	}
+	rectInfos.clear();
+}
+
+void FocusTraceSystem::AddRectInfo(int prio, float left, float top, float right, float bottom, float dist)
+{
+	FocusRectInfo* rectInfo = new FocusRectInfo();
+	rectInfo->distToCam = dist;
+	rectInfo->priority = prio;
+	rectInfo->left = left;
+	rectInfo->right = right;
+	rectInfo->top = top;
+	rectInfo->bottom = bottom;
+	rectInfos.push_back(rectInfo);
 }
 
 bool FocusTraceSystem::GetCameraPosition(float* outPos)
@@ -148,6 +156,62 @@ bool FocusTraceSystem::GetCameraRotation(float* outRot)
 		return camera->GetRotation(outRot);
 	}
 	return false;
+}
+
+void FocusTraceSystem::InitializeCapture()
+{
+	const TCHAR* CmdLineParam = FCommandLine::Get();
+	FString resParam;
+	if (!FParse::Value(CmdLineParam, TEXT("-capres="), resParam))
+	{
+		resParam = TEXT("1920*1080");
+	}
+	FString left, right;
+	FString width, height;
+	resParams.clear();
+	while (resParam.Split(TEXT("|"), &left, &right))
+	{
+		if (left.Split(TEXT("*"), &width, &height))
+		{
+			ResParam p;
+			p.width = FCString::Atoi(*width);
+			p.height = FCString::Atoi(*height);
+			resParams.push_back(p);
+		}
+		resParam = right;
+	}
+	if (resParam.Split(TEXT("*"), &width, &height))
+	{
+		ResParam p;
+		p.width = FCString::Atoi(*width);
+		p.height = FCString::Atoi(*height);
+		resParams.push_back(p);
+	}
+
+	FString intervalParam;
+	if (!FParse::Value(CmdLineParam, TEXT("-capinterval="), intervalParam))
+	{
+		intervalParam = TEXT("5");
+	}
+	SetCaptureInterval(FCString::Atoi(*intervalParam));
+}
+
+void FocusTraceSystem::StartCaptureScreen( void* userData )
+{
+	for (int i = 0; i < resParams.size(); i++)
+	{
+		captures.push_back(new UTFocusCaptureScreen(resParams[i].width, resParams[i].height, userData));
+	}
+}
+
+void FocusTraceSystem::ClearCaptureScreen()
+{
+	std::vector<FocusCaptureScreenBase*>::iterator capIter;
+	for (capIter = captures.begin(); capIter != captures.end(); capIter++)
+	{
+		delete (*capIter);
+	}
+	captures.clear();
 }
 
 void FocusTraceSystem::RetriveAndSendDatas()

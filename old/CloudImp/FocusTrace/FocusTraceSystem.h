@@ -9,6 +9,11 @@
 #include <algorithm>
 #include "FocusTracer.h"
 
+struct ResParam {
+	int width;
+	int height;
+};
+
 class FocusTraceSystem
 {
 	static FocusTraceSystem* instance;
@@ -51,15 +56,16 @@ public:
 		}
 		sender = s; 
 	}
-	void AddCaptureScreen(FocusCaptureScreenBase* cap)
-	{
-		captures.push_back(cap);
-	}
+
+	void InitializeCapture();
+	void StartCaptureScreen( void* userData );
+	void ClearCaptureScreen();
 	void SetCaptureInterval(float interval)
 	{
 		captureInterval = interval;
 	}
 
+	void AddRectInfo(int prio, float left, float top, float right, float bottom, float dist = 0.0f);
 	std::vector<FocusRectInfo*>* GetRectInfos() { return &rectInfos; }
 	bool GetCameraPosition(float* outPos);
 	bool GetCameraRotation(float* outRot);	/// stored in degree
@@ -79,6 +85,7 @@ private:
 	bool sceneJumped;
 
 	float captureInterval;
+	std::vector<ResParam> resParams;
 	std::vector<FocusCaptureScreenBase*> captures;
 
 	std::vector<FocusRectInfo*> rectInfos;
