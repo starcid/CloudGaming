@@ -49,6 +49,8 @@ class ENGINE_API USceneCaptureComponent2D : public USceneCaptureComponent
 	UPROPERTY(interp, Category=PostProcessVolume, BlueprintReadWrite, meta=(UIMin = "0.0", UIMax = "1.0"))
 	float PostProcessBlendWeight;
 
+	bool AntiAliasing;
+
 	//~ Begin UActorComponent Interface
 	virtual void OnRegister() override;
 	virtual void SendRenderTransform_Concurrent() override;

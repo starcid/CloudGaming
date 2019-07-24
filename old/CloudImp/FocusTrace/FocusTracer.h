@@ -59,7 +59,7 @@ public:
 class FocusCaptureScreenBase
 {
 public:
-	FocusCaptureScreenBase(int width, int height, void* userData) {}
+	FocusCaptureScreenBase(int width, int height, bool isAA, void* userData) {}
 	virtual ~FocusCaptureScreenBase() {}
 
 	virtual void Update() = 0;

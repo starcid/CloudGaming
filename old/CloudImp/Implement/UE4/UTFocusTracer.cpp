@@ -376,10 +376,11 @@ void UTFocusSocketSender::Disconnect()
 		socket->Close();
 }
 
-UTFocusCaptureScreen::UTFocusCaptureScreen(int width, int height, void* userData)
-	:FocusCaptureScreenBase(width, height, userData)
+UTFocusCaptureScreen::UTFocusCaptureScreen(int width, int height, bool isAA, void* userData)
+	:FocusCaptureScreenBase(width, height, isAA, userData)
 	,capWidth(width)
 	,capHeight(height)
+	,isAntiAliasing(isAA)
 {
 	AUTCharacter* chara = (AUTCharacter*)userData;
 	UCameraComponent* cam = chara->GetCameraComponent();
@@ -394,6 +395,7 @@ UTFocusCaptureScreen::UTFocusCaptureScreen(int width, int height, void* userData
 		renderTarget->AddressX = TextureAddress::TA_Clamp;
 		renderTarget->AddressY = TextureAddress::TA_Clamp;
 
+		capture->AntiAliasing = isAntiAliasing;
 		capture->FOVAngle = 100;
 		capture->bCaptureEveryFrame = true;
 		capture->bCaptureOnMovement = true;
@@ -547,7 +549,10 @@ bool UTFocusCaptureScreen::CaptureScreenToDisk(const char* path)
 	capture->CaptureScene();
 
 	FString FilePath(path);
-	FilePath = FString::Printf(TEXT("%d_%d_%d.bmp"), capWidth, capHeight, GFrameNumber);
+	if( !isAntiAliasing )
+		FilePath = FString::Printf(TEXT("%d_%d_%d.bmp"), capWidth, capHeight, GFrameNumber);
+	else
+		FilePath = FString::Printf(TEXT("%d_%d_%d_TAA.bmp"), capWidth, capHeight, GFrameNumber);
 /*
 	TUniquePtr<FImageWriteTask> ImageTask = MakeUnique<FImageWriteTask>();
 	TUniquePtr<TImagePixelData<FColor>> PixelData = DumpPixels(*renderTarget);

@@ -83,7 +83,7 @@ private:
 class UTFocusCaptureScreen : public FocusCaptureScreenBase
 {
 public:
-	UTFocusCaptureScreen(int width, int height, void* userData);
+	UTFocusCaptureScreen(int width, int height, bool isAA, void* userData);
 	virtual ~UTFocusCaptureScreen();
 
 	virtual void Update();
@@ -95,6 +95,7 @@ public:
 private:
 	int capWidth;
 	int capHeight;
+	bool isAntiAliasing;
 
 	USceneCaptureComponent2D *capture;
 	UTextureRenderTarget2D *renderTarget;

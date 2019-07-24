@@ -162,29 +162,51 @@ void FocusTraceSystem::InitializeCapture()
 {
 	const TCHAR* CmdLineParam = FCommandLine::Get();
 	FString resParam;
+	resParams.clear();
 	if (!FParse::Value(CmdLineParam, TEXT("-capres="), resParam))
 	{
-		resParam = TEXT("1920*1080");
+		return;
 	}
 	FString left, right;
 	FString width, height;
-	resParams.clear();
+	FString isAAStr, resStr;
+	bool isAA;
 	while (resParam.Split(TEXT("|"), &left, &right))
 	{
+		isAA = false;
+		if (left.Split(TEXT("_"), &resStr, &isAAStr))
+		{
+			left = resStr;
+			if (isAAStr == TEXT("AA"))
+			{
+				isAA = true;
+			}
+		}
 		if (left.Split(TEXT("*"), &width, &height))
 		{
 			ResParam p;
 			p.width = FCString::Atoi(*width);
 			p.height = FCString::Atoi(*height);
+			p.isAA = isAA;
 			resParams.push_back(p);
 		}
 		resParam = right;
+	}
+	isAA = false;
+	if (left.Split(TEXT("_"), &resStr, &isAAStr))
+	{
+		left = resStr;
+		if (isAAStr == TEXT("AA"))
+		{
+			isAA = true;
+		}
 	}
 	if (resParam.Split(TEXT("*"), &width, &height))
 	{
 		ResParam p;
 		p.width = FCString::Atoi(*width);
 		p.height = FCString::Atoi(*height);
+		p.isAA = isAA;
 		resParams.push_back(p);
 	}
 
@@ -200,7 +222,7 @@ void FocusTraceSystem::StartCaptureScreen( void* userData )
 {
 	for (int i = 0; i < resParams.size(); i++)
 	{
-		captures.push_back(new UTFocusCaptureScreen(resParams[i].width, resParams[i].height, userData));
+		captures.push_back(new UTFocusCaptureScreen(resParams[i].width, resParams[i].height, resParams[i].isAA, userData));
 	}
 }
 

@@ -12,6 +12,7 @@
 struct ResParam {
 	int width;
 	int height;
+	bool isAA;
 };
 
 class FocusTraceSystem

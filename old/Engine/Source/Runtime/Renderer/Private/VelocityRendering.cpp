@@ -606,7 +606,7 @@ bool IsMotionBlurEnabled(const FViewInfo& View)
 		&& View.FinalPostProcessSettings.MotionBlurMax > 0.001f
 		&& View.Family->bRealtimeUpdate
 		&& MotionBlurQuality > 0
-		/*&& !View.bIsSceneCapture*/
+		&& !(View.bIsSceneCapture && !View.Family->bRealtimeUpdate)
 		&& !(View.Family->Views.Num() > 1);
 }
 
@@ -866,8 +866,9 @@ bool FDeferredShadingSceneRenderer::ShouldRenderVelocities() const
 		bool bDistanceFieldAO = ShouldPrepareForDistanceFieldAO();
 
 		bool bSSRTemporal = IsSSRTemporalPassRequired(View);
+		bool bNotRealTimeSceneCapture = (View.bIsSceneCapture && !View.Family->bRealtimeUpdate);
 
-		bNeedsVelocity |= (bMotionBlur || bTemporalAA || bDistanceFieldAO || bSSRTemporal)/* && !View.bIsSceneCapture*/;
+		bNeedsVelocity |= (bMotionBlur || bTemporalAA || bDistanceFieldAO || bSSRTemporal) && !bNotRealTimeSceneCapture;
 	}
 
 	return bNeedsVelocity;
@@ -884,7 +885,7 @@ void FDeferredShadingSceneRenderer::RenderVelocities(FRHICommandListImmediate& R
 	}
 
 	// this is not supported
-	//check(!Views[0].bIsSceneCapture);
+	check(!(Views[0].bIsSceneCapture && !Views[0].Family->bRealtimeUpdate));
 
 	SCOPED_DRAW_EVENT(RHICmdList, RenderVelocities);
 	SCOPED_GPU_STAT(RHICmdList, Stat_GPU_RenderVelocities);
