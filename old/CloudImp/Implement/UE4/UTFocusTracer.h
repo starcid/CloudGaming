@@ -103,4 +103,13 @@ private:
 	UCameraComponent* camera;
 };
 
+class UTFocusScreenPercentage : public FocusScreenPercentageBase
+{
+public:
+	UTFocusScreenPercentage() {}
+	virtual ~UTFocusScreenPercentage() {}
+
+	virtual void SetScreenPercentage(float percentage);
+};
+
 #endif	/*__UT_FOCUS_TRACER_H__*/

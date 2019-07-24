@@ -69,4 +69,13 @@ public:
 	virtual bool CaptureUIToDisk(const char* path) = 0;
 };
 
+class FocusScreenPercentageBase
+{
+public:
+	FocusScreenPercentageBase() {}
+	virtual ~FocusScreenPercentageBase() {}
+
+	virtual void SetScreenPercentage(float percentage) = 0;
+};
+
 #endif/*__FOCUS_TRACER_H__*/

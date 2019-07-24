@@ -26,10 +26,13 @@ void FocusTraceSystem::Release()
 		sender->Disconnect();
 		delete sender;
 	}
+	if (screenPercentage != NULL)
+		delete screenPercentage;
 	uiTracer = NULL;
 	drawer = NULL;
 	camera = NULL;
 	sender = NULL;
+	screenPercentage = NULL;
 
 	std::vector<FocusRectInfo*>::iterator rectInfoIter;
 	for (rectInfoIter = rectInfos.begin(); rectInfoIter != rectInfos.end(); rectInfoIter++)
@@ -55,7 +58,16 @@ FocusTraceSystem::FocusTraceSystem()
 	camera = NULL;
 	sceneJumped = false;
 	sender = NULL;
+	screenPercentage = NULL;
 	timer = 0;
+}
+
+void FocusTraceSystem::SetScreenPercentage(float per)
+{
+	if (screenPercentage != NULL)
+	{
+		screenPercentage->SetScreenPercentage(per);
+	}
 }
 
 static bool compareRectDist(FocusRectInfo* i1, FocusRectInfo* i2)

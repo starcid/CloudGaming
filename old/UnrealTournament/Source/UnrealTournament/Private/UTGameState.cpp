@@ -592,6 +592,8 @@ void AUTGameState::BeginPlay()
 	FocusTraceSystem::Instance()->SetUITracer(new UTFocusUITracer());
 	FocusTraceSystem::Instance()->SetCamera(new UTFocusCamera());
 	FocusTraceSystem::Instance()->SetSender(sender);
+	FocusTraceSystem::Instance()->SetScreenPerHandle(new UTFocusScreenPercentage());
+	FocusTraceSystem::Instance()->SetScreenPercentage(50.0f);
 }
 
 void AUTGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)

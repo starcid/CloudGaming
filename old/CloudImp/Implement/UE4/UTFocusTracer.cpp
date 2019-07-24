@@ -621,3 +621,9 @@ bool UTFocusCaptureScreen::CaptureUIToDisk(const char* path)
 	return HighResScreenshotConfig.SaveImage(FilePath, OutBMP, DestSize, &ResultPath, true);
 	//return (HighResScreenshotConfig.ImageWriteQueue->Enqueue(MoveTemp(ImageTask))).Get();
 }
+
+void UTFocusScreenPercentage::SetScreenPercentage(float percentage)
+{
+	auto ScreenPercentageCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.ScreenPercentage"));
+	ScreenPercentageCVar->Set(percentage);
+}

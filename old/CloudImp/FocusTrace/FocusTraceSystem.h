@@ -47,6 +47,12 @@ public:
 			camera = NULL;
 		camera = cam; 
 	}
+	void SetScreenPerHandle(FocusScreenPercentageBase* screenPer)
+	{
+		if (screenPercentage != NULL)
+			delete screenPercentage;
+		screenPercentage = screenPer;
+	}
 	void SetSceneJumpd() { sceneJumped = true; }
 	void SetSender(FocusSocketSenderBase* s) 
 	{ 
@@ -72,6 +78,8 @@ public:
 	bool GetCameraRotation(float* outRot);	/// stored in degree
 	bool IsSceneJumped() { return sceneJumped; }
 
+	void SetScreenPercentage(float per);
+
 private:
 	void RetriveAndSendDatas();
 
@@ -92,6 +100,7 @@ private:
 	std::vector<FocusRectInfo*> rectInfos;
 
 	FocusSocketSenderBase* sender;
+	FocusScreenPercentageBase* screenPercentage;
 
 	float timer;
 };
