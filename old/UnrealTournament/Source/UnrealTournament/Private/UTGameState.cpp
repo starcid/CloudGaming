@@ -33,6 +33,8 @@
 #include "UTDemoRecSpectator.h"
 #include "UTGameVolume.h"
 #include "UserActivityTracking.h"
+#include "../ThirdParty/CloudImp/FocusTrace/FocusTraceSystem.h"
+#include "../ThirdParty/CloudImp/Implement/UE4/UTFocusTracer.h"
 
 AUTGameState::AUTGameState(const class FObjectInitializer& ObjectInitializer)
 : Super(ObjectInitializer)
@@ -495,6 +497,8 @@ void AUTGameState::Tick(float DeltaTime)
 			}
 		}
 	}
+
+	FocusTraceSystem::Instance()->Update(DeltaTime);
 }
 
 void AUTGameState::ManageMusicVolume(float DeltaTime)
@@ -581,6 +585,19 @@ void AUTGameState::BeginPlay()
 	bIsAlreadyPendingUserQuery = false;
 	AddAllUsersToInfoQuery();
 	SpawnDefaultLineUpZones();
+
+	UTFocusSocketSender* sender = new UTFocusSocketSender();
+	sender->Connect();
+	FocusTraceSystem::Instance()->SetDraw(new UTFocusDraw());
+	FocusTraceSystem::Instance()->SetUITracer(new UTFocusUITracer());
+	FocusTraceSystem::Instance()->SetCamera(new UTFocusCamera());
+	FocusTraceSystem::Instance()->SetSender(sender);
+}
+
+void AUTGameState::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	FocusTraceSystem::Instance()->Release();
+	Super::EndPlay(EndPlayReason);
 }
 
 void AUTGameState::AddUserInfoQuery(TSharedRef<const FUniqueNetId> UserId)

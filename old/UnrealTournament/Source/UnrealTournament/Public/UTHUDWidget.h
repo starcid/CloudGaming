@@ -351,6 +351,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Widgets")
 	virtual void DrawMaterial( UMaterialInterface* Material, float X, float Y, float Width, float Height, float MaterialU, float MaterialV, float MaterialUWidth, float MaterialVHeight, float DrawOpacity = 1.0f, FLinearColor DrawColor = FLinearColor::White, FVector2D RenderOffset = FVector2D(0.0f, 0.0f), float Rotation=0, FVector2D RotPivot = FVector2D(0.5f, 0.5f));
 
+	TArray<UStructProperty*>& GetRenderObjectList() { return RenderObjectList; }
+
 protected:
 	// Draws any render objects associated with this widget.  NOTE: If a blueprint overrides Draw it needs to call DrawAllRenderObjects
 	UFUNCTION(BlueprintCallable, Category="Render Objects")

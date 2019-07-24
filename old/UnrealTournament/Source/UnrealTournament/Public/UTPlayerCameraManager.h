@@ -105,5 +105,7 @@ class UNREALTOURNAMENT_API AUTPlayerCameraManager : public APlayerCameraManager
 
 	virtual void ProcessViewRotation(float DeltaTime, FRotator& OutViewRotation, FRotator& OutDeltaRot) override;
 
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };
 

@@ -65,6 +65,10 @@ public:
 	/** See OnMouseButtonDown event */
 	void SetOnMouseButtonDown(FPointerEventHandler EventHandler);
 
+	FSlateColor GetColorAndOpacityPub() const;
+	TAttribute< const FSlateBrush* > GetImagePub() const { return Image; }
+	float GetFinalOpacity() { return FinalOpacity; }
+
 public:
 
 	// SWidget overrides
@@ -83,4 +87,6 @@ protected:
 
 	/** Invoked when the mouse is pressed in the image */
 	FPointerEventHandler OnMouseButtonDownHandler;
+
+	mutable float FinalOpacity;
 };

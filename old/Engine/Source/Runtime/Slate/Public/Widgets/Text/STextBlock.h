@@ -220,6 +220,10 @@ public:
 	virtual int32 OnPaint( const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyClippingRect, FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled ) const override;
 	virtual FReply OnMouseButtonDoubleClick( const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent ) override;
 	virtual FVector2D ComputeDesiredSize(float) const override;
+
+	FSlateColor GetColorAndOpacityPub() const { return GetColorAndOpacity(); }
+
+	FWidgetStyle& GetInWidgetStyle() { return CurrentInWidgetStyle; }
 	// End of SWidget interface
 
 protected:
@@ -301,4 +305,6 @@ private:
 
 	/** The delegate to execute when this text is double clicked */
 	FOnClicked OnDoubleClicked;
+
+	mutable FWidgetStyle CurrentInWidgetStyle;
 };

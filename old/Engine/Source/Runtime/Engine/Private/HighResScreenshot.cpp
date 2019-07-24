@@ -9,6 +9,7 @@
 #include "Slate/SceneViewport.h"
 #include "Interfaces/IImageWrapper.h"
 #include "Interfaces/IImageWrapperModule.h"
+#include "Misc/FileHelper.h"
 
 static TAutoConsoleVariable<int32> CVarSaveEXRCompressionQuality(
 	TEXT("r.SaveEXR.CompressionQuality"),
@@ -194,7 +195,7 @@ template<> struct FPixelTypeTraits<FFloat16Color>
 };
 
 template<typename TPixelType>
-bool FHighResScreenshotConfig::SaveImage(const FString& File, const TArray<TPixelType>& Bitmap, const FIntPoint& BitmapSize, FString* OutFilename) const
+bool FHighResScreenshotConfig::SaveImage(const FString& File, const TArray<TPixelType>& Bitmap, const FIntPoint& BitmapSize, FString* OutFilename, bool UnCompress) const
 {
 	typedef FPixelTypeTraits<TPixelType> Traits;
 
@@ -235,6 +236,10 @@ bool FHighResScreenshotConfig::SaveImage(const FString& File, const TArray<TPixe
 
 	// here we require the input file name to have an extension
 	FString NewExtension = bIsWritingHDRImage ? TEXT(".exr") : TEXT(".png");
+	if (!bIsWritingHDRImage && UnCompress)
+	{
+		NewExtension = TEXT(".bmp");
+	}
 	FString Filename = FPaths::GetBaseFilename(File, false) + NewExtension;
 
 	if (OutFilename != nullptr)
@@ -244,24 +249,30 @@ bool FHighResScreenshotConfig::SaveImage(const FString& File, const TArray<TPixe
 	
 	bool bSuccess = false;
 
-	if (ImageWriter && ImageWriter->ImageWrapper->SetRaw((void*)&Bitmap[0], sizeof(TPixelType)* x * y, x, y, Traits::SourceChannelLayout, BitsPerPixel))
+	if (ImageWriter)
 	{
-		ImageCompression::CompressionQuality LocalCompressionQuality = ImageCompression::Default;
-		
-		if(bIsWritingHDRImage && CVarSaveEXRCompressionQuality.GetValueOnAnyThread() == 0)
+		if (!UnCompress && ImageWriter->ImageWrapper->SetRaw((void*)&Bitmap[0], sizeof(TPixelType)* x * y, x, y, Traits::SourceChannelLayout, BitsPerPixel))
 		{
-			LocalCompressionQuality = ImageCompression::Uncompressed;
+			ImageCompression::CompressionQuality LocalCompressionQuality = ImageCompression::Default;
+
+			if (bIsWritingHDRImage && CVarSaveEXRCompressionQuality.GetValueOnAnyThread() == 0)
+			{
+				LocalCompressionQuality = ImageCompression::Uncompressed;
+			}
+
+			// Compress and write image
+			FArchive* Ar = FileManager->CreateFileWriter(Filename.GetCharArray().GetData());
+			if (Ar != nullptr)
+			{
+				const TArray<uint8>& CompressedData = ImageWriter->ImageWrapper->GetCompressed(LocalCompressionQuality);
+				int32 CompressedSize = CompressedData.Num();
+				Ar->Serialize((void*)CompressedData.GetData(), CompressedSize);
+				delete Ar;
+				bSuccess = true;
+			}
 		}
-
-		// Compress and write image
-		FArchive* Ar = FileManager->CreateFileWriter(Filename.GetCharArray().GetData());
-		if (Ar != nullptr)
+		else if (UnCompress && FFileHelper::CreateBitmap(Filename.GetCharArray().GetData(), x, y, (FColor*)&Bitmap[0], NULL, FileManager, NULL, true))
 		{
-		const TArray<uint8>& CompressedData = ImageWriter->ImageWrapper->GetCompressed(LocalCompressionQuality);
-			int32 CompressedSize = CompressedData.Num();
-			Ar->Serialize((void*)CompressedData.GetData(), CompressedSize);
-			delete Ar;
-
 			bSuccess = true;
 		}
 	}
@@ -271,8 +282,8 @@ bool FHighResScreenshotConfig::SaveImage(const FString& File, const TArray<TPixe
 	return bSuccess;
 }
 
-template ENGINE_API bool FHighResScreenshotConfig::SaveImage<FColor>(const FString& File, const TArray<FColor>& Bitmap, const FIntPoint& BitmapSize, FString* OutFilename) const;
-template ENGINE_API bool FHighResScreenshotConfig::SaveImage<FFloat16Color>(const FString& File, const TArray<FFloat16Color>& Bitmap, const FIntPoint& BitmapSize, FString* OutFilename) const;
+template ENGINE_API bool FHighResScreenshotConfig::SaveImage<FColor>(const FString& File, const TArray<FColor>& Bitmap, const FIntPoint& BitmapSize, FString* OutFilename, bool UnCompress) const;
+template ENGINE_API bool FHighResScreenshotConfig::SaveImage<FFloat16Color>(const FString& File, const TArray<FFloat16Color>& Bitmap, const FIntPoint& BitmapSize, FString* OutFilename, bool UnCompress) const;
 
 FHighResScreenshotConfig::FImageWriter::FImageWriter(const TSharedPtr<class IImageWrapper>& InWrapper)
 	: ImageWrapper(InWrapper)

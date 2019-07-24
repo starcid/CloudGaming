@@ -209,6 +209,9 @@ public:
 	/** Updates the viewport RHI with a new size and fullscreen flag */
 	virtual void UpdateViewportRHI(bool bDestroyed, uint32 NewSizeX, uint32 NewSizeY, EWindowMode::Type NewWindowMode, EPixelFormat PreferredPixelFormat) override;
 
+	/** Get the cached viewport geometry. */
+	const FGeometry& GetCachedGeometry() const { return CachedGeometry; }
+
 	/** ISlateViewport interface */
 	virtual FSlateShaderResource* GetViewportRenderTargetTexture() const override;
 	virtual void OnDrawViewport( const FGeometry& AllottedGeometry, const FSlateRect& MyClippingRect, FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled ) override;

@@ -751,14 +751,17 @@ int32 SWidget::Paint(const FPaintArgs& Args, const FGeometry& AllottedGeometry, 
 		return VolatileLayerId;
 	}
 
+	CachedGeometry = AllottedGeometry;
+	CachedGeometry.AppendTransform(FSlateLayoutTransform(Args.GetWindowToDesktopTransform()));
+
 	if ( bFoldTick && bCanTick )
 	{
-		FGeometry TickGeometry = AllottedGeometry;
-		TickGeometry.AppendTransform( FSlateLayoutTransform(Args.GetWindowToDesktopTransform()) );
+		///FGeometry TickGeometry = AllottedGeometry;
+		///TickGeometry.AppendTransform(FSlateLayoutTransform(Args.GetWindowToDesktopTransform()));
 
 		SWidget* MutableThis = const_cast<SWidget*>(this);
 		MutableThis->ExecuteActiveTimers( Args.GetCurrentTime(), Args.GetDeltaTime() );
-		MutableThis->Tick( TickGeometry, Args.GetCurrentTime(), Args.GetDeltaTime() );
+		MutableThis->Tick(CachedGeometry, Args.GetCurrentTime(), Args.GetDeltaTime() );
 	}
 
 	// Record hit test geometry, but only if we're not caching.

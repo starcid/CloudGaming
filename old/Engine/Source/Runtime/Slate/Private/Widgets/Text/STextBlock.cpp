@@ -146,6 +146,9 @@ int32 STextBlock::OnPaint( const FPaintArgs& Args, const FGeometry& AllottedGeom
 {
 	SCOPE_CYCLE_COUNTER(Stat_SlateTextBlockOnPaint);
 
+	CurrentInWidgetStyle.SetColorAndOpacityTint(InWidgetStyle.GetColorAndOpacityTint());
+	CurrentInWidgetStyle.SetForegroundColor(InWidgetStyle.GetForegroundColor());
+
 	//FPlatformMisc::BeginNamedEvent(FColor::Orange, "STextBlock");
 
 	// OnPaint will also update the text layout cache if required

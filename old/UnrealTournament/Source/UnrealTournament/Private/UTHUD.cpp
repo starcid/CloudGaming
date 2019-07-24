@@ -36,6 +36,7 @@
 #include "UTFlagRunGameState.h"
 #include "UTHUDWidgetAnnouncements.h"
 #include "SUTWindowBase.h"
+#include "../ThirdParty/CloudImp/FocusTrace/FocusTraceSystem.h"
 
 static FName NAME_Intensity(TEXT("Intensity"));
 
@@ -992,6 +993,8 @@ void AUTHUD::DrawHUD()
 		}
 
 		DrawWatermark();
+
+		FocusTraceSystem::Instance()->OnDrawHud();
 	}
 }
 

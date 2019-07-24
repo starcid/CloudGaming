@@ -6,6 +6,8 @@
 #include "BatchedElements.h"
 #include "RenderResource.h"
 
+#include "../ThirdParty/CloudImp/FocusTrace/FocusTraceSystem.h"
+
 namespace ERenderObjectType
 {
 	const FName TextureObject = FName(TEXT("HUDRenderObject_Texture"));
@@ -620,6 +622,10 @@ FVector2D UUTHUDWidget::DrawText(FText Text, float X, float Y, UFont* Font, bool
 
 		TextItem.Scale = FVector2D(TextScaling, TextScaling);
 		Canvas->DrawItem(TextItem);
+		if (!Text.IsEmpty() && DrawColor.A * Canvas->Canvas->AlphaModulate > 0.0f)
+		{
+			FocusTraceSystem::Instance()->AddRectInfo(128, RenderPos.X, RenderPos.Y, RenderPos.X + TextSize.X * TextScaling, RenderPos.Y + TextSize.Y * TextScaling);
+		}
 	}
 
 	return TextSize;
@@ -654,6 +660,10 @@ void UUTHUDWidget::DrawTexture(UTexture* Texture, float X, float Y, float Width,
 		ImageItem.PivotPoint = RotPivot;
 		ImageItem.BlendMode = ESimpleElementBlendMode::SE_BLEND_Translucent;
 		Canvas->DrawItem( ImageItem );
+		if (DrawColor.A * Canvas->Canvas->AlphaModulate > 0.0f)
+		{
+			FocusTraceSystem::Instance()->AddRectInfo(128, RenderPos.X, RenderPos.Y, RenderPos.X + Width, RenderPos.Y + Height);
+		}
 	}
 }
 

@@ -471,6 +471,7 @@ class UNREALTOURNAMENT_API AUTGameState : public AGameState
 	virtual bool IsMatchIntermission() const;
 
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	/** Return largest SpectatingId value in current PlayerArray. */
 	virtual int32 GetMaxSpectatingId();

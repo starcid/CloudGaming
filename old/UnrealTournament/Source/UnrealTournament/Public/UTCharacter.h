@@ -927,6 +927,11 @@ public:
 		return bDisallowWeaponFiring;
 	}
 
+	inline UCameraComponent* GetCameraComponent()
+	{
+		return CharacterCameraComponent;
+	}
+
 	/** Used to replicate bIsFloorSliding to non owning clients */
 	UPROPERTY(ReplicatedUsing = OnRepFloorSliding)
 	bool bRepFloorSliding;

@@ -67,6 +67,11 @@ FVector2D SImage::ComputeDesiredSize( float ) const
 	return FVector2D::ZeroVector;
 }
 
+FSlateColor SImage::GetColorAndOpacityPub() const
+{
+	return ColorAndOpacity.Get();
+}
+
 void SImage::SetColorAndOpacity( const TAttribute<FSlateColor>& InColorAndOpacity )
 {
 	if ( !ColorAndOpacity.IdenticalTo(InColorAndOpacity) )

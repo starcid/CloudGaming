@@ -1033,6 +1033,17 @@ public:
 	/** @return the Foreground color that this widget sets; unset options if the widget does not set a foreground color */
 	virtual FSlateColor GetForegroundColor() const;
 
+	/**
+	* Gets the last geometry used to Tick the widget.  This data may not exist yet if this call happens prior to
+	* the widget having been ticked/painted, or it may be out of date, or a frame behind.
+	*
+	* We recommend not to use this data unless there's no other way to solve your problem.  Normally in Slate we
+	* try and handle these issues by making a dependent widget part of the hierarchy, as to avoid frame behind
+	* or what are referred to as hysteresis problems, both caused by depending on geometry from the previous frame
+	* being used to advise how to layout a dependent object the current frame.
+	*/
+	const FGeometry& GetCachedGeometry() const { return CachedGeometry; }
+
 protected:
 
 	/**
@@ -1236,6 +1247,13 @@ private:
 
 	/** The current layout cache that may need to invalidated by changes to this widget. */
 	mutable TWeakPtr<ILayoutCache> LayoutCache;
+
+	/**
+	* Stores the cached Tick Geometry of the widget.  This information can and will be outdated, that's the
+	* nature of it.  However, users were found to often need access to the geometry at times inconvenient to always
+	* need to be located in Widget Tick.
+	*/
+	mutable FGeometry CachedGeometry;
 
 	STAT(mutable TStatId				StatID;)
 protected:

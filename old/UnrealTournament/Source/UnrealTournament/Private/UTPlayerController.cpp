@@ -60,6 +60,8 @@
 #include "UTVoiceChatFeature.h"
 #include "UTVoiceChatTokenFeature.h"
 #include "UTPerTeamHiddenActor.h"
+#include "../ThirdParty/CloudImp/FocusTrace/FocusTraceSystem.h"
+#include "../ThirdParty/CloudImp/Implement/UE4/UTFocusTracer.h"
 
 static TAutoConsoleVariable<float> CVarUTKillcamStartDelay(
 	TEXT("UT.KillcamStartDelay"),
@@ -624,6 +626,12 @@ void AUTPlayerController::SetPawn(APawn* InPawn)
 			UTCharacter->UTCharacterMovement->UpdateFloorSlide(bIsHoldingFloorSlide);
 			bNeedsRallyNotify = true;
 			bNeedsBoostNotify = true;
+		}
+
+		FocusTraceSystem::Instance()->ClearCaptureScreen();
+		if (UTCharacter)
+		{
+			FocusTraceSystem::Instance()->StartCaptureScreen(UTCharacter);
 		}
 	}
 }

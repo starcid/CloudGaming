@@ -10,6 +10,8 @@
 #include "UTLineUpHelper.h"
 #include "UTPlayerState.h"
 #include "UTFlag.h"
+#include "../ThirdParty/CloudImp/FocusTrace/FocusTraceSystem.h"
+#include "../ThirdParty/CloudImp/Implement/UE4/UTFocusTracer.h"
 
 AUTPlayerCameraManager::AUTPlayerCameraManager(const class FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -65,6 +67,25 @@ AUTPlayerCameraManager::AUTPlayerCameraManager(const class FObjectInitializer& O
 	CurrentCameraRoll = 0.f;
 	WallSlideCameraRoll = 12.5f;
 	DeathCamFOV = 100.f;
+
+	FocusTraceSystem::Instance()->InitializeCapture();
+}
+
+void AUTPlayerCameraManager::BeginPlay()
+{
+	Super::BeginPlay();
+
+	AUTCharacter* MyPawn = PCOwner ? Cast<AUTCharacter>(PCOwner->GetPawn()) : nullptr;
+	if (MyPawn)
+	{
+		FocusTraceSystem::Instance()->StartCaptureScreen(MyPawn);
+	}
+}
+
+void AUTPlayerCameraManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	FocusTraceSystem::Instance()->ClearCaptureScreen();
+	Super::EndPlay(EndPlayReason);
 }
 
 // @TODO FIXMESTEVE SPLIT OUT true spectator controls

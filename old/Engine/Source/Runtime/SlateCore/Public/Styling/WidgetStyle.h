@@ -36,6 +36,31 @@ public:
 	}
 
 	/**
+	* Blends the current tint color with the specified alpha.
+	*
+	* @param InTint The color to blend with.
+	* @return This instance (for method chaining).
+	*/
+	FWidgetStyle& BlendOpacity(float InOpacity)
+	{
+		ColorAndOpacityTint.A *= InOpacity;
+		return *this;
+	}
+
+	/**
+	* Sets the current opacity color from the given linear color.
+	*
+	* @param InForeground The foreground color value to set.
+	* @return This instance (for method chaining).
+	* @see GetForegroundColor
+	*/
+	FWidgetStyle& SetColorAndOpacityTint(const FLinearColor& InTint)
+	{
+		ColorAndOpacityTint = InTint;
+		return *this;
+	}
+
+	/**
 	 * Sets the current foreground color from the given linear color.
 	 *
 	 * @param InForeground The foreground color value to set.
