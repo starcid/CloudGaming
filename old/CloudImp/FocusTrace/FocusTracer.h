@@ -43,6 +43,17 @@ public:
 	virtual bool GetRotation(float* outRot) = 0;
 };
 
+struct Packet
+{
+	Packet(unsigned char* b, unsigned int s)
+	{
+		buf = b;
+		size = s;
+	}
+	unsigned char* buf;
+	unsigned int size;
+};
+
 class FocusSocketSenderBase
 {
 public:
@@ -53,6 +64,7 @@ public:
 	virtual bool Connect(const char* ipAddr, int port) = 0;
 	virtual bool IsConnected() = 0;
 	virtual bool Send(unsigned char* buf, unsigned int size) = 0;
+	virtual void Recv(std::vector<Packet>& packets) = 0;
 	virtual void Disconnect() = 0;
 };
 

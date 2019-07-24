@@ -310,7 +310,7 @@ bool UTFocusSocketSender::Connect()
 	FString ipParam;
 	if (!FParse::Value(CmdLineParam, TEXT("-cloudip="), ipParam))
 	{
-		ipParam = TEXT("127.0.0.1");
+		return false;
 	}
 
 	FString portParam;
@@ -333,6 +333,10 @@ bool UTFocusSocketSender::Connect(const char* ipAddr, int port)
 	const TCHAR* tIpAddr = fIpAddr.GetCharArray().GetData();
 	addr->SetIp(tIpAddr, isValid);
 	addr->SetPort(port);
+
+	offset = 0;
+	outBuf = NULL;
+	totalSize = 0;
 
 	return isValid && socket->Connect(*addr);;
 }
@@ -370,10 +374,91 @@ bool UTFocusSocketSender::Send(unsigned char* buf, unsigned int size)
 	return false;
 }
 
+static unsigned int MakePackets(unsigned char* buf, unsigned int buf_size, unsigned int offset, std::vector<Packet>* out_packets, unsigned char*& out_buf, unsigned int& total_size, unsigned char* header)
+{
+	if (buf_size == 0)
+		return offset;
+
+	if (buf_size + offset <= 4)
+	{
+		memcpy(header + offset, buf, buf_size);
+	}
+	else
+	{
+		if (offset <= 4)
+		{
+			memcpy(header + offset, buf, 4 - offset);
+			total_size = *((unsigned int*)header);
+			out_buf = new unsigned char[total_size];
+			if (buf_size + offset < total_size + 4)
+			{
+				memcpy(out_buf, buf + 4 - offset, buf_size + offset - 4);
+				offset += buf_size;
+			}
+			else
+			{
+				memcpy(out_buf, buf + 4 - offset, total_size);
+				buf += (total_size + 4 - offset);
+				buf_size -= (total_size + 4 - offset);
+				out_packets->push_back(Packet(out_buf, total_size));
+				offset = 0;
+				out_buf = NULL;
+				offset = MakePackets(buf, buf_size, offset, out_packets, out_buf, total_size, header);
+			}
+		}
+		else
+		{
+			if (buf_size + offset < total_size + 4)
+			{
+				memcpy(out_buf + offset - 4, buf, buf_size);
+				offset += buf_size;
+			}
+			else
+			{
+				memcpy(out_buf + offset - 4, buf, total_size + 4 - offset);
+				buf += (total_size + 4 - offset);
+				buf_size -= (total_size + 4 - offset);
+				out_packets->push_back(Packet(out_buf, total_size));
+				offset = 0;
+				out_buf = NULL;
+				offset = MakePackets(buf, buf_size, offset, out_packets, out_buf, total_size, header);
+			}
+		}
+	}
+	///printf("offset:%d, iResult:%d, totalSize:%d\n", offset, iResult, totalSize);
+	return offset;
+}
+
+void UTFocusSocketSender::Recv(std::vector<Packet>& packets)
+{
+	if (!socket)
+		return;
+
+	int32 iResult;
+	uint8 recvbuf[512];
+
+	if (socket->Recv(recvbuf, 512, iResult))
+	{
+		offset = MakePackets((unsigned char*)recvbuf, iResult, offset, &packets, outBuf, totalSize, header);
+	}
+}
+
 void UTFocusSocketSender::Disconnect()
 {
-	if(socket != NULL)
+	if (socket != NULL)
+	{
 		socket->Close();
+	}
+	if (outBuf != NULL)
+	{
+		delete[] outBuf;
+		outBuf = NULL;
+	}
+}
+
+UTFocusSocketSender::~UTFocusSocketSender()
+{
+	Disconnect();
 }
 
 UTFocusCaptureScreen::UTFocusCaptureScreen(int width, int height, bool isAA, void* userData)

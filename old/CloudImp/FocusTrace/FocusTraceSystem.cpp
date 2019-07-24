@@ -263,6 +263,17 @@ void FocusTraceSystem::RetriveAndSendDatas()
 			sender->Send(buf, size);
 			delete[] buf;
 		}
+
+		std::vector<Packet> outPackets;
+		sender->Recv(outPackets);
+		for (int i = 0; i < outPackets.size(); i++)
+		{
+			if (outPackets[i].size == 4)	// screen percentage
+			{
+				float percentage = *((float *)outPackets[i].buf);
+				SetScreenPercentage(percentage);
+			}
+		}
 	}
 }
 

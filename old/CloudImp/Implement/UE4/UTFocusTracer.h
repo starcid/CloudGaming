@@ -68,15 +68,22 @@ class UTFocusSocketSender : public FocusSocketSenderBase
 {
 public:
 	UTFocusSocketSender() { socket = NULL; }
-	virtual ~UTFocusSocketSender() {}
+	virtual ~UTFocusSocketSender();
 
 	virtual bool Connect();
 	virtual bool Connect(const char* ipAddr, int port);
 	virtual bool IsConnected();
 	virtual bool Send(unsigned char* buf, unsigned int size);
+	virtual void Recv(std::vector<Packet>& packets);
 	virtual void Disconnect();
 
 private:
+	/// recv param
+	unsigned int offset;
+	unsigned char* outBuf;
+	unsigned int totalSize;
+	unsigned char header[4];
+
 	FSocket* socket;
 };
 
