@@ -111,12 +111,6 @@ void FocusTraceSystem::Update(float DeltaSeconds)
 	{
 		uiTracer->UpdateUIRectInfo(rectInfos);
 	}
-
-	/// process datas
-	RetriveAndSendDatas();
-
-	/// restore scene jumped
-	sceneJumped = false;
 }
 
 void FocusTraceSystem::OnDrawHud()
@@ -130,6 +124,12 @@ void FocusTraceSystem::OnDrawHud()
 			drawer->DrawRect(info->left, info->right, info->top, info->bottom, info->priority);
 		}
 	}
+
+	/// process datas
+	RetriveAndSendDatas();
+
+	/// restore scene jumped
+	sceneJumped = false;
 
 	/// clear
 	std::vector<FocusRectInfo*>::iterator rectInfoIter;

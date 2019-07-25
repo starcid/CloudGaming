@@ -338,6 +338,7 @@ bool UTFocusSocketSender::Connect(const char* ipAddr, int port)
 	outBuf = NULL;
 	totalSize = 0;
 
+	socket->SetNonBlocking();
 	return isValid && socket->Connect(*addr);;
 }
 
@@ -437,7 +438,7 @@ void UTFocusSocketSender::Recv(std::vector<Packet>& packets)
 	int32 iResult;
 	uint8 recvbuf[512];
 
-	if (socket->Recv(recvbuf, 512, iResult))
+	if (socket->Recv(recvbuf, 512, iResult, ESocketReceiveFlags::None) && iResult > 0)
 	{
 		offset = MakePackets((unsigned char*)recvbuf, iResult, offset, &packets, outBuf, totalSize, header);
 	}

@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	{
 		port = atoi(argv[1]);
 		interval = atoi(argv[2]);
-		if (argv[3] == "true")
+		if (strcmp(argv[3], "true") == 0)
 		{
 			autoChangePercentage = true;
 		}
@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
 						{
 							unsigned int sendData[2];
 							sendData[0] = 4;	/// data size 4
-							float* percentage = (float*)sendData[1];
+							float* percentage = (float*)&sendData[1];
 							*percentage = 100.0f - 10.0f * (count % 6);
 							send(new_socket, (char*)sendData, 8, 0);
 							count++;
