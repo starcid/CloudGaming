@@ -15,6 +15,7 @@ class UNREALTOURNAMENT_API UUTFocusTracerComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	UUTFocusTracerComponent();
+	virtual ~UUTFocusTracerComponent();
 
 	UPROPERTY(EditAnywhere, Category = "Tracer Priority", meta = (ToolTip = "Set priority to distinguish tracer type.(Dynamic 255, UI 254, Texture complexity level 0 - 253)"))
 	uint8 Priority;
@@ -28,6 +29,8 @@ public:
 	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	void SetTracerEnable(bool enable);
 
 private:
 	UTFocusTracer* tracer;

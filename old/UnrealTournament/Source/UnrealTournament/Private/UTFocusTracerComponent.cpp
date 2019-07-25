@@ -13,8 +13,14 @@ UUTFocusTracerComponent::UUTFocusTracerComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	// ...
+	tracer = new UTFocusTracer();
 }
 
+UUTFocusTracerComponent::~UUTFocusTracerComponent()
+{
+	if (tracer != NULL)
+		delete tracer;
+}
 
 // Called when the game starts
 void UUTFocusTracerComponent::BeginPlay()
@@ -22,7 +28,7 @@ void UUTFocusTracerComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-	tracer = new UTFocusTracer(GetOwner(), Priority, Key);
+	tracer->Initialize(GetOwner(), Priority, Key);
 	FocusTraceSystem::Instance()->Register(tracer);
 }
 
@@ -38,5 +44,10 @@ void UUTFocusTracerComponent::TickComponent(float DeltaTime, ELevelTick TickType
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+
+void UUTFocusTracerComponent::SetTracerEnable(bool enable)
+{ 
+	tracer->SetEnable(enable); 
 }
 

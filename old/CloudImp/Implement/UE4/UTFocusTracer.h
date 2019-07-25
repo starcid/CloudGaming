@@ -8,12 +8,17 @@
 class UTFocusTracer : public FocusTracerBase
 {
 public:
-	UTFocusTracer(AActor* aactor, uint8 p, FString key);
+	UTFocusTracer();
 	virtual ~UTFocusTracer() {}
 
 	virtual FocusRectInfo* UpdateRectInfo();
 
-	static void UpdateUIRect(std::vector<FocusTracerBase*>& rectInfos);
+	void SetEnable(bool isEnable)
+	{
+		enable = isEnable;
+	}
+
+	void Initialize(AActor* aactor, uint8 p, FString key);
 
 private:
 	bool UpdateBounds();
@@ -26,6 +31,8 @@ private:
 	UPrimitiveComponent* primComp;
 	FBoxSphereBounds localBound;
 	bool localBoundCalculated;
+
+	bool enable;
 
 	FVector bounds[8];
 	bool boundsUpdated;
@@ -67,7 +74,7 @@ public:
 class UTFocusSocketSender : public FocusSocketSenderBase
 {
 public:
-	UTFocusSocketSender() { socket = NULL; }
+	UTFocusSocketSender();
 	virtual ~UTFocusSocketSender();
 
 	virtual bool Connect();

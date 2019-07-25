@@ -7,6 +7,7 @@
 #include "UTHat.h"
 #include "UTHatLeader.h"
 #include "UTEyewear.h"
+#include "UTFocusTracerComponent.h"
 
 #include "UTCharacter.generated.h"
 
@@ -2251,6 +2252,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ghost)
 	class UUTGhostComponent* GhostComponent;
 
+	UPROPERTY(VisibleAnywhere, Category = "Focus Trace")
+	UUTFocusTracerComponent* FocusTraceComp;
 
 	// The character's max speed will be multipled by this value.  It allows for inventory and or game modes to override the max speed
 	// for a character in a simple way.

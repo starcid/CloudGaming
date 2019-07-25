@@ -362,7 +362,6 @@ void FocusTraceSystem::UnRegister(FocusTracerBase* tracer)
 		if (*iter == tracer)
 		{
 			tracers.erase(iter);
-			delete tracer;
 			break;
 		}
 	}

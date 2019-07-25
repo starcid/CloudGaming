@@ -24,13 +24,20 @@
 #include <stdlib.h>
 #include <vector>
 
-UTFocusTracer::UTFocusTracer(AActor* aactor, uint8 p, FString key)
-	: actor(aactor)
-	, priority(p)
-	, keyName(key)
-	, localBound(ForceInitToZero)
-	, localBoundCalculated(false)
+UTFocusTracer::UTFocusTracer()
 {
+	enable = true;
+}
+
+void UTFocusTracer::Initialize(AActor* aactor, uint8 p, FString key)
+{
+	localBound = FBoxSphereBounds(EForceInit::ForceInitToZero);
+	localBoundCalculated = false;
+
+	actor = aactor;
+	priority = p;
+	keyName = key;
+
 	player = NULL;
 	primComp = NULL;
 	boundsUpdated = UpdateBounds();
@@ -86,6 +93,9 @@ bool UTFocusTracer::UpdateBounds()
 
 FocusRectInfo* UTFocusTracer::UpdateRectInfo()
 {
+	if (!enable)
+		return NULL;
+
 	if (actor->GetRootComponent()->Mobility != EComponentMobility::Static)
 	{
 		boundsUpdated = UpdateBounds();
@@ -301,6 +311,15 @@ bool UTFocusCamera::GetRotation(float* outRot)
 		}
 	}
 	return false;
+}
+
+UTFocusSocketSender::UTFocusSocketSender() 
+{ 
+	socket = NULL; 
+
+	offset = 0;
+	outBuf = NULL;
+	totalSize = 0;
 }
 
 bool UTFocusSocketSender::Connect()

@@ -215,6 +215,11 @@ AUTCharacter::AUTCharacter(const class FObjectInitializer& ObjectInitializer)
 
 	MaxSpeedPctModifier = 1.0f;
 	MinNetUpdateFrequency = 100.0f;
+
+	FocusTraceComp = ObjectInitializer.CreateDefaultSubobject<UUTFocusTracerComponent>(this, TEXT("FocusTraceComp"));
+	FocusTraceComp->Priority = 255;
+	FocusTraceComp->Key = TEXT("Mesh");
+	AddOwnedComponent(FocusTraceComp);
 }
 
 float AUTCharacter::GetWeaponBobScaling()
@@ -5155,6 +5160,16 @@ void AUTCharacter::PossessedBy(AController* NewController)
 		SetCosmeticsFromPlayerState();
 	}
 	OldPlayerState = Cast<AUTPlayerState>(PlayerState);
+
+	AUTPlayerController* PC = Cast<AUTPlayerController>(NewController);
+	if (PC != NULL)
+	{
+		FocusTraceComp->SetTracerEnable(false);
+	}
+	else
+	{
+		FocusTraceComp->SetTracerEnable(true);
+	}
 }
 
 void AUTCharacter::UnPossessed()
