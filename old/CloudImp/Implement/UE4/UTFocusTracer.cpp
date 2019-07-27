@@ -609,7 +609,7 @@ unsigned char* UTFocusCaptureScreen::CaptureScreenToMemory(unsigned int& size)
 	if (!capture)
 		return NULL;
 
-	capture->CaptureScene();
+	capture->CaptureSceneDeferred();
 
 	check(IsInRenderingThread());
 
@@ -651,7 +651,7 @@ bool UTFocusCaptureScreen::CaptureScreenToDisk(const char* path)
 	if (!capture)
 		return false;
 
-	capture->CaptureScene();
+	capture->CaptureSceneDeferred();
 
 	FString FilePath(path);
 	if( !isAntiAliasing )

@@ -41,11 +41,11 @@ void FocusTraceSystem::Release()
 	}
 	rectInfos.clear();
 
-	std::vector<FocusTracerBase*>::iterator iter;
+	/*std::vector<FocusTracerBase*>::iterator iter;
 	for (iter = tracers.begin(); iter != tracers.end(); iter++)
 	{
 		delete (*iter);
-	}
+	}*/
 	tracers.clear();
 
 	ClearCaptureScreen();
