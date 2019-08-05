@@ -9,6 +9,12 @@
 #include <algorithm>
 #include "FocusTracer.h"
 
+struct ResParam {
+	int width;
+	int height;
+	bool isAA;
+};
+
 class FocusTraceSystem
 {
 	static FocusTraceSystem* instance;
@@ -41,6 +47,12 @@ public:
 			camera = NULL;
 		camera = cam; 
 	}
+	void SetScreenPerHandle(FocusScreenPercentageBase* screenPer)
+	{
+		if (screenPercentage != NULL)
+			delete screenPercentage;
+		screenPercentage = screenPer;
+	}
 	void SetSceneJumpd() { sceneJumped = true; }
 	void SetSender(FocusSocketSenderBase* s) 
 	{ 
@@ -51,19 +63,21 @@ public:
 		}
 		sender = s; 
 	}
-	void AddCaptureScreen(FocusCaptureScreenBase* cap)
-	{
-		captures.push_back(cap);
-	}
+	void InitializeCapture();
+	void StartCaptureScreen(void* userData);
+	void ClearCaptureScreen();
 	void SetCaptureInterval(float interval)
 	{
 		captureInterval = interval;
 	}
 
+	void AddRectInfo(int prio, float left, float top, float right, float bottom, float dist = 0.0f);
 	std::vector<FocusRectInfo*>* GetRectInfos() { return &rectInfos; }
 	bool GetCameraPosition(float* outPos);
 	bool GetCameraRotation(float* outRot);	/// stored in degree
 	bool IsSceneJumped() { return sceneJumped; }
+
+	void SetScreenPercentage(float per);
 
 private:
 	void RetriveAndSendDatas();
@@ -79,11 +93,13 @@ private:
 	bool sceneJumped;
 
 	float captureInterval;
+	std::vector<ResParam> resParams;
 	std::vector<FocusCaptureScreenBase*> captures;
 
 	std::vector<FocusRectInfo*> rectInfos;
 
 	FocusSocketSenderBase* sender;
+	FocusScreenPercentageBase* screenPercentage;
 
 	float timer;
 };

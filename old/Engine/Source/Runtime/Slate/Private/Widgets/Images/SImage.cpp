@@ -13,6 +13,7 @@ void SImage::Construct( const FArguments& InArgs )
 	Image = InArgs._Image;
 	ColorAndOpacity = InArgs._ColorAndOpacity;
 	OnMouseButtonDownHandler = InArgs._OnMouseButtonDown;
+	FinalOpacity = 1.0f;
 }
 
 
@@ -26,6 +27,7 @@ int32 SImage::OnPaint( const FPaintArgs& Args, const FGeometry& AllottedGeometry
 		const uint32 DrawEffects = bIsEnabled ? ESlateDrawEffect::None : ESlateDrawEffect::DisabledEffect;
 
 		const FLinearColor FinalColorAndOpacity( InWidgetStyle.GetColorAndOpacityTint() * ColorAndOpacity.Get().GetColor(InWidgetStyle) * ImageBrush->GetTint( InWidgetStyle ) );
+		FinalOpacity = FinalColorAndOpacity.A;
 
 		FSlateDrawElement::MakeBox(OutDrawElements, LayerId, AllottedGeometry.ToPaintGeometry(), ImageBrush, MyClippingRect, DrawEffects, FinalColorAndOpacity );
 	}

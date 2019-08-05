@@ -21,13 +21,20 @@
 #include <stdlib.h>
 #include <vector>
 
-UTFocusTracer::UTFocusTracer(AActor* aactor, uint8 p, FString key)
-	: actor(aactor)
-	, priority(p)
-	, keyName(key)
-	, localBound(ForceInitToZero)
-	, localBoundCalculated(false)
+UTFocusTracer::UTFocusTracer()
 {
+	enable = true;
+}
+
+void UTFocusTracer::Initialize(AActor* aactor, uint8 p, FString key)
+{
+	localBound = FBoxSphereBounds(EForceInit::ForceInitToZero);
+	localBoundCalculated = false;
+
+	actor = aactor;
+	priority = p;
+	keyName = key;
+
 	player = NULL;
 	primComp = NULL;
 	boundsUpdated = UpdateBounds();
@@ -299,6 +306,15 @@ bool UTFocusCamera::GetRotation(float* outRot)
 	return false;
 }
 
+UTFocusSocketSender::UTFocusSocketSender()
+{
+	socket = NULL;
+
+	offset = 0;
+	outBuf = NULL;
+	totalSize = 0;
+}
+
 bool UTFocusSocketSender::Connect()
 {
 	const TCHAR* CmdLineParam = FCommandLine::Get();
@@ -365,16 +381,96 @@ bool UTFocusSocketSender::Send(unsigned char* buf, unsigned int size)
 	return false;
 }
 
+static unsigned int MakePackets(unsigned char* buf, unsigned int buf_size, unsigned int offset, std::vector<Packet>* out_packets, unsigned char*& out_buf, unsigned int& total_size, unsigned char* header)
+{
+	if (buf_size == 0)
+		return offset;
+
+	if (buf_size + offset <= 4)
+	{
+		memcpy(header + offset, buf, buf_size);
+	}
+	else
+	{
+		if (offset <= 4)
+		{
+			memcpy(header + offset, buf, 4 - offset);
+			total_size = *((unsigned int*)header);
+			out_buf = new unsigned char[total_size];
+			if (buf_size + offset < total_size + 4)
+			{
+				memcpy(out_buf, buf + 4 - offset, buf_size + offset - 4);
+				offset += buf_size;
+			}
+			else
+			{
+				memcpy(out_buf, buf + 4 - offset, total_size);
+				buf += (total_size + 4 - offset);
+				buf_size -= (total_size + 4 - offset);
+				out_packets->push_back(Packet(out_buf, total_size));
+				offset = 0;
+				out_buf = NULL;
+				offset = MakePackets(buf, buf_size, offset, out_packets, out_buf, total_size, header);
+			}
+		}
+		else
+		{
+			if (buf_size + offset < total_size + 4)
+			{
+				memcpy(out_buf + offset - 4, buf, buf_size);
+				offset += buf_size;
+			}
+			else
+			{
+				memcpy(out_buf + offset - 4, buf, total_size + 4 - offset);
+				buf += (total_size + 4 - offset);
+				buf_size -= (total_size + 4 - offset);
+				out_packets->push_back(Packet(out_buf, total_size));
+				offset = 0;
+				out_buf = NULL;
+				offset = MakePackets(buf, buf_size, offset, out_packets, out_buf, total_size, header);
+			}
+		}
+	}
+	///printf("offset:%d, iResult:%d, totalSize:%d\n", offset, iResult, totalSize);
+	return offset;
+}
+
+void UTFocusSocketSender::Recv(std::vector<Packet>& packets)
+{
+	if (!socket)
+		return;
+
+	int32 iResult;
+	uint8 recvbuf[512];
+
+	if (socket->Recv(recvbuf, 512, iResult, ESocketReceiveFlags::None) && iResult > 0)
+	{
+		offset = MakePackets((unsigned char*)recvbuf, iResult, offset, &packets, outBuf, totalSize, header);
+	}
+}
+
 void UTFocusSocketSender::Disconnect()
 {
 	if(socket != NULL)
 		socket->Close();
+	if (outBuf != NULL)
+	{
+		delete[] outBuf;
+		outBuf = NULL;
+	}
 }
 
-UTFocusCaptureScreen::UTFocusCaptureScreen(int width, int height, void* userData)
-	:FocusCaptureScreenBase(width, height, userData)
+UTFocusSocketSender::~UTFocusSocketSender()
+{
+	Disconnect();
+}
+
+UTFocusCaptureScreen::UTFocusCaptureScreen(int width, int height, bool isAA, void* userData)
+	:FocusCaptureScreenBase(width, height, isAA, userData)
 	,capWidth(width)
 	,capHeight(height)
+	,isAntiAliasing(isAA)
 {
 	ASCharacter* chara = (ASCharacter*)userData;
 	UCameraComponent* cam = chara->GetCameraComponent();
@@ -493,7 +589,7 @@ unsigned char* UTFocusCaptureScreen::CaptureScreenToMemory(unsigned int& size)
 	if (!capture)
 		return NULL;
 
-	capture->CaptureScene();
+	capture->CaptureSceneDeferred();
 
 	check(IsInRenderingThread());
 
@@ -535,7 +631,7 @@ bool UTFocusCaptureScreen::CaptureScreenToDisk(const char* path)
 	if (!capture)
 		return false;
 
-	capture->CaptureScene();
+	capture->CaptureSceneDeferred();
 
 	TUniquePtr<FImageWriteTask> ImageTask = MakeUnique<FImageWriteTask>();
 	FString FilePath(path);
@@ -584,4 +680,10 @@ bool UTFocusCaptureScreen::CaptureUIToDisk(const char* path)
 	FHighResScreenshotConfig &HighResScreenshotConfig = GetHighResScreenshotConfig();
 	HighResScreenshotConfig.SetHDRCapture(false);
 	return (HighResScreenshotConfig.ImageWriteQueue->Enqueue(MoveTemp(ImageTask))).Get();
+}
+
+void UTFocusScreenPercentage::SetScreenPercentage(float percentage)
+{
+	auto ScreenPercentageCVar = IConsoleManager::Get().FindConsoleVariable(TEXT("r.ScreenPercentage"));
+	ScreenPercentageCVar->Set(percentage);
 }

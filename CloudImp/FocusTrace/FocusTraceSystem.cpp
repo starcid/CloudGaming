@@ -36,11 +36,6 @@ void FocusTraceSystem::Release()
 	}
 	rectInfos.clear();
 
-	std::vector<FocusTracerBase*>::iterator iter;
-	for (iter = tracers.begin(); iter != tracers.end(); iter++)
-	{
-		delete (*iter);
-	}
 	tracers.clear();
 
 	std::vector<FocusCaptureScreenBase*>::iterator capIter;
@@ -61,6 +56,14 @@ FocusTraceSystem::FocusTraceSystem()
 	timer = 0;
 }
 
+void FocusTraceSystem::SetScreenPercentage(float per)
+{
+	if (screenPercentage != NULL)
+	{
+		screenPercentage->SetScreenPercentage(per);
+	}
+}
+
 static bool compareRectDist(FocusRectInfo* i1, FocusRectInfo* i2)
 {
 	return (i1->distToCam < i2->distToCam);
@@ -69,14 +72,6 @@ static bool compareRectDist(FocusRectInfo* i1, FocusRectInfo* i2)
 void FocusTraceSystem::Update(float DeltaSeconds)
 {
 	timer += DeltaSeconds;
-
-	/// clear
-	std::vector<FocusRectInfo*>::iterator rectInfoIter;
-	for (rectInfoIter = rectInfos.begin(); rectInfoIter != rectInfos.end(); rectInfoIter++)
-	{
-		delete (*rectInfoIter);
-	}
-	rectInfos.clear();
 
 	/// collect valid rect info
 	std::vector<FocusTracerBase*>::iterator iter;
@@ -101,8 +96,8 @@ void FocusTraceSystem::Update(float DeltaSeconds)
 		{
 			(*capIter)->CaptureScreenToDisk("D:\\Screen");
 			(*capIter)->CaptureUIToDisk("D:\\Screen");
-			timer = 0.0f;
 		}
+		timer = 0.0f;
 	}
 
 	/// collect ui info
@@ -110,12 +105,6 @@ void FocusTraceSystem::Update(float DeltaSeconds)
 	{
 		uiTracer->UpdateUIRectInfo(rectInfos);
 	}
-
-	/// process datas
-	RetriveAndSendDatas();
-
-	/// restore scene jumped
-	sceneJumped = false;
 }
 
 void FocusTraceSystem::OnDrawHud()
@@ -129,6 +118,32 @@ void FocusTraceSystem::OnDrawHud()
 			drawer->DrawRect(info->left, info->right, info->top, info->bottom, info->priority);
 		}
 	}
+
+	/// process datas
+	RetriveAndSendDatas();
+
+	/// restore scene jumped
+	sceneJumped = false;
+
+	/// clear
+	std::vector<FocusRectInfo*>::iterator rectInfoIter;
+	for (rectInfoIter = rectInfos.begin(); rectInfoIter != rectInfos.end(); rectInfoIter++)
+	{
+		delete (*rectInfoIter);
+	}
+	rectInfos.clear();
+}
+
+void FocusTraceSystem::AddRectInfo(int prio, float left, float top, float right, float bottom, float dist)
+{
+	FocusRectInfo* rectInfo = new FocusRectInfo();
+	rectInfo->distToCam = dist;
+	rectInfo->priority = prio;
+	rectInfo->left = left;
+	rectInfo->right = right;
+	rectInfo->top = top;
+	rectInfo->bottom = bottom;
+	rectInfos.push_back(rectInfo);
 }
 
 bool FocusTraceSystem::GetCameraPosition(float* outPos)
@@ -149,6 +164,84 @@ bool FocusTraceSystem::GetCameraRotation(float* outRot)
 	return false;
 }
 
+void FocusTraceSystem::InitializeCapture()
+{
+	const TCHAR* CmdLineParam = FCommandLine::Get();
+	FString resParam;
+	resParams.clear();
+	if (!FParse::Value(CmdLineParam, TEXT("-capres="), resParam))
+	{
+		return;
+	}
+	FString left, right;
+	FString width, height;
+	FString isAAStr, resStr;
+	bool isAA;
+	while (resParam.Split(TEXT("|"), &left, &right))
+	{
+		isAA = false;
+		if (left.Split(TEXT("_"), &resStr, &isAAStr))
+		{
+			left = resStr;
+			if (isAAStr == TEXT("AA"))
+			{
+				isAA = true;
+			}
+		}
+		if (left.Split(TEXT("*"), &width, &height))
+		{
+			ResParam p;
+			p.width = FCString::Atoi(*width);
+			p.height = FCString::Atoi(*height);
+			p.isAA = isAA;
+			resParams.push_back(p);
+		}
+		resParam = right;
+	}
+	isAA = false;
+	if (left.Split(TEXT("_"), &resStr, &isAAStr))
+	{
+		left = resStr;
+		if (isAAStr == TEXT("AA"))
+		{
+			isAA = true;
+		}
+	}
+	if (resParam.Split(TEXT("*"), &width, &height))
+	{
+		ResParam p;
+		p.width = FCString::Atoi(*width);
+		p.height = FCString::Atoi(*height);
+		p.isAA = isAA;
+		resParams.push_back(p);
+	}
+
+	FString intervalParam;
+	if (!FParse::Value(CmdLineParam, TEXT("-capinterval="), intervalParam))
+	{
+		intervalParam = TEXT("5");
+	}
+	SetCaptureInterval(FCString::Atoi(*intervalParam));
+}
+
+void FocusTraceSystem::StartCaptureScreen(void* userData)
+{
+	for (int i = 0; i < resParams.size(); i++)
+	{
+		captures.push_back(new UTFocusCaptureScreen(resParams[i].width, resParams[i].height, resParams[i].isAA, userData));
+	}
+}
+
+void FocusTraceSystem::ClearCaptureScreen()
+{
+	std::vector<FocusCaptureScreenBase*>::iterator capIter;
+	for (capIter = captures.begin(); capIter != captures.end(); capIter++)
+	{
+		delete (*capIter);
+	}
+	captures.clear();
+}
+
 void FocusTraceSystem::RetriveAndSendDatas()
 {
 	if (sender != NULL && sender->IsConnected())
@@ -163,6 +256,17 @@ void FocusTraceSystem::RetriveAndSendDatas()
 		{
 			sender->Send(buf, size);
 			delete[] buf;
+		}
+
+		std::vector<Packet> outPackets;
+		sender->Recv(outPackets);
+		for (int i = 0; i < outPackets.size(); i++)
+		{
+			if (outPackets[i].size == 4)	// screen percentage
+			{
+				float percentage = *((float *)outPackets[i].buf);
+				SetScreenPercentage(percentage);
+			}
 		}
 	}
 }
@@ -252,7 +356,6 @@ void FocusTraceSystem::UnRegister(FocusTracerBase* tracer)
 		if (*iter == tracer)
 		{
 			tracers.erase(iter);
-			delete tracer;
 			break;
 		}
 	}

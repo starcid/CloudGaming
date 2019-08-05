@@ -8,12 +8,19 @@
 class UTFocusTracer : public FocusTracerBase
 {
 public:
-	UTFocusTracer(AActor* aactor, uint8 p, FString key);
+	UTFocusTracer();
 	virtual ~UTFocusTracer() {}
 
 	virtual FocusRectInfo* UpdateRectInfo();
 
 	static void UpdateUIRect(std::vector<FocusTracerBase*>& rectInfos);
+
+	void SetEnable(bool isEnable)
+	{
+		enable = isEnable;
+	}
+
+	void Initialize(AActor* aactor, uint8 p, FString key);
 
 private:
 	bool UpdateBounds();
@@ -26,6 +33,8 @@ private:
 	UPrimitiveComponent* primComp;
 	FBoxSphereBounds localBound;
 	bool localBoundCalculated;
+
+	bool enable;
 
 	FVector bounds[8];
 	bool boundsUpdated;
@@ -67,23 +76,30 @@ public:
 class UTFocusSocketSender : public FocusSocketSenderBase
 {
 public:
-	UTFocusSocketSender() { socket = NULL; }
-	virtual ~UTFocusSocketSender() {}
+	UTFocusSocketSender();
+	virtual ~UTFocusSocketSender();
 
 	virtual bool Connect();
 	virtual bool Connect(const char* ipAddr, int port);
 	virtual bool IsConnected();
 	virtual bool Send(unsigned char* buf, unsigned int size);
+	virtual void Recv(std::vector<Packet>& packets);
 	virtual void Disconnect();
 
 private:
+	/// recv param
+	unsigned int offset;
+	unsigned char* outBuf;
+	unsigned int totalSize;
+	unsigned char header[4];
+
 	FSocket* socket;
 };
 
 class UTFocusCaptureScreen : public FocusCaptureScreenBase
 {
 public:
-	UTFocusCaptureScreen(int width, int height, void* userData);
+	UTFocusCaptureScreen(int width, int height, bool isAA, void* userData);
 	virtual ~UTFocusCaptureScreen();
 
 	virtual void Update();
@@ -95,11 +111,21 @@ public:
 private:
 	int capWidth;
 	int capHeight;
+	bool isAntiAliasing;
 
 	USceneCaptureComponent2D *capture;
 	UTextureRenderTarget2D *renderTarget;
 
 	UCameraComponent* camera;
+};
+
+class UTFocusScreenPercentage : public FocusScreenPercentageBase
+{
+public:
+	UTFocusScreenPercentage() {}
+	virtual ~UTFocusScreenPercentage() {}
+
+	virtual void SetScreenPercentage(float percentage);
 };
 
 #endif	/*__UT_FOCUS_TRACER_H__*/
